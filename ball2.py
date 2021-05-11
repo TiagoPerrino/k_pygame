@@ -7,6 +7,23 @@ ANCHO = 800
 ALTO = 600
 FPS = 60
 
+
+levels = [  ['---X----'],
+            
+            [ 'XXXXXXXX', 
+                'X--DD--X',
+                'X--DD--X',
+                'XXXXXXXX',
+                '---DD---'
+          ],
+            [ 'DDDDDDDD',
+                'DDDDDDDD',
+                'DDDDDDDD',
+                'DDDDDDDD'  
+          ]
+]
+
+
 class Marcador(pg.sprite.Sprite):
 
     class Justificado():
@@ -64,11 +81,11 @@ class CuentaVidas(MarcadorH):
 class Ladrillo(pg.sprite.Sprite):
     disfraces = ['greenTile.png', 'redTile.png', 'redTileBreak.png']
 
-    def __init__(self, x, y, esDuro=False):
+    def __init__(self, x, y, esBlando=True):
         super().__init__()
         self.imagenes = self.cargaImagenes()
-        self.esDuro = esDuro
-        self.imagen_actual = 1 if self.esDuro else 0
+        self.esBlando = esBlando
+        self.imagen_actual = 0 if self.esBlando else 1
         self.image = self.imagenes[self.imagen_actual]
         self.rect = self.image.get_rect(topleft=(x,y))
         self.numGolpes = 0
@@ -80,13 +97,13 @@ class Ladrillo(pg.sprite.Sprite):
         return imagenes
 
     def update(self, dt):
-        if self.esDuro and self.numGolpes == 1:
+        if self.esBlando == False and self.numGolpes == 1:
             self.imagen_actual = 2
             self.image = self.imagenes[self.imagen_actual]
 
     def desaparece(self):
         self.numGolpes += 1
-        return (self.numGolpes > 0 and not self.esDuro) or (self.numGolpes > 1 and self.esDuro)
+        return (self.numGolpes > 0 and self.esBlando) or (self.numGolpes > 1 and not self.esBlando)
 
 
 class Raqueta(pg.sprite.Sprite):
@@ -208,14 +225,9 @@ class Game():
         self.todoGrupo = pg.sprite.Group()
         self.grupoJugador = pg.sprite.Group()
         self.grupoLadrillos = pg.sprite.Group()
+        self.level = 0
 
-        for fila in range(4):
-            for columna in range(8):
-                x = columna * 100 + 5
-                y = fila * 40 + 5
-                esDuro = random.randint(1, 10) == 1
-                ladrillo = Ladrillo(x, y, esDuro)
-                self.grupoLadrillos.add(ladrillo)
+        self.disponer_ladrillos(levels[self.level])
 
         self.cuentaPuntos = MarcadorH(10,10, fontsize=50)
         self.cuentaVidas = CuentaVidas(790, 10, "topright", 50, (255, 255, 0))
@@ -230,6 +242,14 @@ class Game():
         self.todoGrupo.add(self.grupoJugador, self.grupoLadrillos)
         self.todoGrupo.add(self.cuentaPuntos, self.cuentaVidas)
 
+    def disponer_ladrillos(self, level):
+        for fila, cadena in enumerate(level):
+            for columna, caracter in enumerate(cadena):
+                if caracter in 'DX':
+                    x = 5 + (100 * columna)
+                    y = 5 + (40 * fila)
+                    ladrillo = Ladrillo(x, y, caracter == 'X')
+                    self.grupoLadrillos.add(ladrillo)
 
     def bucle_principal(self):
         game_over = False
@@ -250,8 +270,10 @@ class Game():
                 if ladrillo.desaparece():
                     self.grupoLadrillos.remove(ladrillo)
                     self.todoGrupo.remove(ladrillo)
-
-
+                    if len(self.grupoLadrillos) == 0:
+                        self.level += 1
+                        self.disponer_ladrillos(levels[self.level])
+                        self.todoGrupo.add(self.grupoLadrillos)
 
             self.todoGrupo.update(dt)
             if self.bola.estado == Bola.Estado.muerta:
@@ -269,4 +291,3 @@ if __name__ == '__main__':
     pg.init()
     game = Game()
     game.bucle_principal()
-
