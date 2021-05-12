@@ -2,9 +2,7 @@ FPS = 60
 ANCHO = 800
 ALTO = 600
 
-levels = [  ['---X----'],
-            
-            [ 'XXXXXXXX', 
+levels = [  [ 'XXXXXXXX', 
                 'X--DD--X',
                 'X--DD--X',
                 'XXXXXXXX',
